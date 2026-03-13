@@ -1,1 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Digital Clock</title>
+    <script>
+        function updateClock() {
+            const now = new Date();
+            const utc = now.toUTCString();
+            document.getElementById('utc').textContent = 'UTC: ' + utc;
 
+            // Timezones
+            const timezones = {
+                'PST': -8,
+                'CST': -6,
+                'EST': -5,
+                'GMT': 0,
+                'CET': 1,
+                'IST': 5.5,
+            };
+
+            for (const [zone, offset] of Object.entries(timezones)) {
+                const localTime = new Date(now.getTime() + offset * 60 * 60 * 1000);
+                document.getElementById(zone).textContent = `${zone}: ${localTime.toISOString().slice(0, 19).replace('T', ' ')} UTC${offset > 0 ? '+' : ''}${offset}`;
+            }
+        }
+
+        setInterval(updateClock, 1000);
+    </script>
+</head>
+<body onload="updateClock()">
+    <h1>Digital Clock</h1>
+    <p id="utc"></p>
+    <p id="PST"></p>
+    <p id="CST"></p>
+    <p id="EST"></p>
+    <p id="GMT"></p>
+    <p id="CET"></p>
+    <p id="IST"></p>
+</body>
+</html>
