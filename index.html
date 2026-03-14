@@ -406,19 +406,25 @@ footer strong{color:rgba(255,255,255,0.75);}
     nav.classList.toggle('scrolled', window.scrollY > 30);
   });
 </script>
-<div id="hora-local" style="text-align:center; padding:20px; font-family:sans-serif; color:#6b3f1e; font-weight:bold;"></div>
-    <script>
-        function atualizarRelogio() {
-            const agora = new Date();
-            const brasil = agora.toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"});
-            const el = document.getElementById("hora-local");
-            if(el) el.innerText = "Horário em Araruama: " + brasil;
-        }
-        setInterval(atualizarRelogio, 1000);
-        atualizarRelogio();
-    </script>
+
+<!-- RELÓGIO ARARUAMA -->
+<div id="hora-local" style="text-align:center; padding:14px 20px; background:#1a2e1a; font-family:'Nunito',sans-serif; font-size:0.88rem; color:rgba(255,255,255,0.55); letter-spacing:0.05em;"></div>
+
+<script>
+  function atualizarRelogio() {
+    const agora = new Date();
+    const horario = agora.toLocaleTimeString("pt-BR", {
+      timeZone: "America/Sao_Paulo",
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+    const el = document.getElementById("hora-local");
+    if (el) el.innerText = "🕐 Horário em Araruama: " + horario;
+  }
+  setInterval(atualizarRelogio, 1000);
+  atualizarRelogio();
+</script>
+
 </body>
-</html>
-  
-      
-      
+</html
