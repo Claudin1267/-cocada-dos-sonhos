@@ -406,5 +406,19 @@ footer strong{color:rgba(255,255,255,0.75);}
     nav.classList.toggle('scrolled', window.scrollY > 30);
   });
 </script>
+<div id="hora-local" style="text-align:center; padding:20px; font-family:sans-serif; color:#6b3f1e; font-weight:bold;"></div>
+    <script>
+        function atualizarRelogio() {
+            const agora = new Date();
+            const brasil = agora.toLocaleTimeString("pt-BR", {timeZone: "America/Sao_Paulo"});
+            const el = document.getElementById("hora-local");
+            if(el) el.innerText = "Horário em Araruama: " + brasil;
+        }
+        setInterval(atualizarRelogio, 1000);
+        atualizarRelogio();
+    </script>
 </body>
 </html>
+  
+      
+      
