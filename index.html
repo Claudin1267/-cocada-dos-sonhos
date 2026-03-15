@@ -468,65 +468,164 @@ footer strong{color:rgba(255,255,255,.75);}
 </div>
 
 <script>
-const SV_SYS=`Você é Dona Silvana, vendedora calorosa e artesã da Cocada dos Sonhos, em Araruama, RJ.
-Seu único objetivo é fechar a venda com simpatia, sem pressão.
+// ── DONA SILVANA · AGENTE DE VENDAS ──────────────────────────────────────
+const WPP = 'https://wa.me/5522988083910';
+let svOpen=false, svStarted=false, svNome='', svEtapa=0;
 
-PRODUTO:
-- Cocadas artesanais, feitas à mão
-- Sabores: maracujá, gengibre, amendoim, caramelizada, chocolate e cocada branca
-- Cocada unitária: R$10 | Caixa Premium 5 unidades: R$35 (economia de R$15 vs avulso)
-- Pedido mínimo: 5 unidades (1 caixa) | Pagamento: Pix ou dinheiro
-- Entrega: raio de 15 km de Araruama/RJ, frete sob consulta via WhatsApp
-- Diferenciais: sabor artesanal, embalagem acetato premium, atendimento pessoal
+// Botões contextuais por intenção
+const BTNS = {
+  inicio:   [['🍫 Ver sabores','Quais são os sabores?'],['💰 Ver preços','Quanto custa?'],['📦 Fazer pedido','Como faço um pedido?'],['🚗 Entrega','Tem entrega?']],
+  sabores:  [['💰 Ver preços','Quanto custa?'],['📦 Quero pedir','Como faço um pedido?'],['🚗 Entrega','Tem entrega?']],
+  preco:    [['📦 Quero pedir','Como faço um pedido?'],['🍫 Ver sabores','Quais são os sabores?'],['🚗 Entrega','Tem entrega?']],
+  pedido:   [['🍫 Ver sabores','Quais são os sabores?'],['💰 Ver preços','Quanto custa?']],
+  entrega:  [['📦 Quero pedir','Como faço um pedido?'],['💰 Ver preços','Quanto custa?']],
+  outros:   [['🍫 Sabores','Quais são os sabores?'],['💰 Preços','Quanto custa?'],['📦 Pedir','Como faço um pedido?']]
+};
 
-SOBRE SER A ARTESÃ (só se o cliente perguntar quem faz, se é caseiro, quem é você):
-Responda na primeira pessoa, natural e verdadeiro. Ex: "Sou eu mesma que faço, escolho cada ingrediente com cuidado."
-Nunca ofereça isso por conta própria.
+function svMostrarBtns(tipo) {
+  const lista = BTNS[tipo] || BTNS.outros;
+  const div = document.createElement('div');
+  div.className = 'svsugs';
+  div.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px;padding:4px 12px 10px;';
+  lista.forEach(([label, msg]) => {
+    const b = document.createElement('button');
+    b.className = 'svsug';
+    b.textContent = label;
+    b.onclick = () => { div.remove(); svDigitar(msg); };
+    div.appendChild(b);
+  });
+  document.getElementById('svmsgs').appendChild(div);
+  document.getElementById('svmsgs').scrollTop = 9999;
+}
 
-OBJEÇÃO DE DIABETES:
-Seja honesta: a cocada tradicional contém açúcar e não é indicada para quem controla glicemia.
-Informe que está desenvolvendo versão especial para diabéticos em breve. Não force a venda.
+function svDigitar(txt) {
+  document.getElementById('svinput').value = txt;
+  svEnviar();
+}
 
-FLUXO:
-1. Cumprimente e pergunte o nome
-2. Apresente sabores com entusiasmo (maracujá e caramelizada surpreendem)
-3. Reforce o valor: 5 cocadas artesanais R$35, embalagem premium
-4. Quando interessado, encaminhe ao WhatsApp com link
-5. Link: https://wa.me/5522988083910
+function svNorm(t) {
+  return t.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/[^a-z0-9 ]/g,'');
+}
 
-REGRAS: Máximo 3 frases por resposta. Português informal e caloroso. Nunca invente infos.`;
+function svDetectar(txt) {
+  const t = svNorm(txt);
+  // sabores — aceita erros de digitação comuns
+  if(/sabor|sabire|sabires|sabore|tipos|variedade|opcao|opcoes|maraca|gengibr|amendoi|caramel|chocolat|branca|quais tem|o que tem/.test(t)) return 'sabores';
+  if(/preco|preco|custa|valor|quanto|caro|barato|reais|r\$|cobr/.test(t)) return 'preco';
+  if(/pedir|pedido|comprar|encomendar|quero comprar|fazer pedido|minimo|quantidade/.test(t)) return 'pedido';
+  if(/entreg|frete|distancia|km|araruama|buscar|retirar|vem ate|manda/.test(t)) return 'entrega';
+  if(/diabet|acucar|glicemia|diet|zero acucar|sem acucar|insulina/.test(t)) return 'diabetes';
+  if(/voce faz|voce mesmo|caseiro|quem faz|fabrica|receita|ingrediente/.test(t)) return 'artesa';
+  if(/pix|dinheiro|cartao|pagamento|pagar|forma de pag/.test(t)) return 'pagamento';
+  if(/obrigad|valeu|brigad|grat|tchau|ate logo/.test(t)) return 'obrigado';
+  return 'padrao';
+}
 
-let svHist=[],svOpen=false,svStarted=false;
+function svTexto(intencao) {
+  const n = svNome ? ` <strong>${svNome}</strong>` : '';
+  const msgs = {
+    sabores: `🍬 Temos 6 sabores artesanais feitos na mão${n}:<br><br>
+🌿 <strong>Maracujá</strong> — tropical e refrescante<br>
+🔥 <strong>Gengibre</strong> — aquecida e surpreendente<br>
+🥜 <strong>Amendoim</strong> — crocante e cremosa<br>
+⭐ <strong>Caramelizada</strong> — casquinha dourada irresistível<br>
+🍫 <strong>Chocolate</strong> — intensa e indulgente<br>
+🤍 <strong>Branca</strong> — clássica e delicada<br><br>
+Qual te chamou mais atenção?`,
+
+    preco: `💰 Temos duas opções${n}:<br><br>
+🍬 <strong>Unitária: R$10</strong> por cocada<br>
+🎁 <strong>Caixa Premium: R$35</strong> (5 unidades) — você economiza R$15 e leva numa embalagem acetato linda!<br><br>
+Pagamento em <strong>Pix ou dinheiro</strong>. Quer montar sua caixa?`,
+
+    pedido: `📦 Para fazer seu pedido${n} é simples:<br><br>
+✅ Mínimo <strong>5 unidades</strong> (1 caixinha)<br>
+✅ Pode <strong>misturar os sabores</strong><br>
+✅ Pix ou dinheiro<br><br>
+É só me chamar no WhatsApp que a gente resolve na hora! 👇<br><br>
+<a href="${WPP}?text=Olá+Dona+Silvana!+Quero+fazer+um+pedido+de+cocadas+😊" target="_blank" style="background:#25d366;color:#fff;padding:9px 18px;border-radius:20px;text-decoration:none;font-weight:800;display:inline-block;">💬 Fazer pedido agora</a>`,
+
+    entrega: `🚗 Estamos em <strong>Bananeiras, Araruama/RJ</strong>, próximo ao Supermercado Esperança. Entregamos num raio de <strong>15 km</strong> a partir daqui${n}.<br><br>
+O frete é calculado pela sua distância. Me chama no WhatsApp que te passo o valor rapidinho!<br><br>
+<a href="${WPP}?text=Olá+Dona+Silvana!+Quero+saber+sobre+entrega+na+minha+região" target="_blank" style="background:#25d366;color:#fff;padding:9px 18px;border-radius:20px;text-decoration:none;font-weight:800;display:inline-block;">💬 Consultar frete</a>`,
+
+    diabetes: `💙 Obrigada por me contar${n}. Sendo honesta: a cocada tradicional tem açúcar e <strong>não é indicada para quem controla a glicemia</strong>.<br><br>
+Estou desenvolvendo uma versão especial para diabéticos — assim que ficar pronta aviso! Quer que eu guarde seu contato?<br><br>
+<a href="${WPP}?text=Olá+Dona+Silvana!+Tenho+diabetes+e+quero+ser+avisada+quando+tiver+versão+diet" target="_blank" style="background:#25d366;color:#fff;padding:9px 18px;border-radius:20px;text-decoration:none;font-weight:800;display:inline-block;">💬 Quero ser avisada</a>`,
+
+    artesa: `🥥 Sou eu mesma quem faz${n}! Escolho cada ingrediente com cuidado, preparo tudo aqui em casa com receita própria. Cada caixinha passa pela minha mão antes de sair. É por isso que o sabor é diferente! 😊`,
+
+    pagamento: `💳 Aceitamos <strong>Pix e dinheiro</strong>${n}. Simples assim!<br><br>Quer fechar um pedido?<br><br><a href="${WPP}?text=Quero+fazer+um+pedido+de+cocadas!" target="_blank" style="background:#25d366;color:#fff;padding:9px 18px;border-radius:20px;text-decoration:none;font-weight:800;display:inline-block;">💬 Pedir agora</a>`,
+
+    obrigado: `Fico feliz em ajudar${n}! 🥥 Qualquer dúvida é só falar. O WhatsApp está sempre aberto!<br><br><a href="${WPP}" target="_blank" style="color:#3a7a3a;font-weight:800;">💬 WhatsApp</a>`,
+
+    padrao: `Olá${n}! 🍬 Posso te ajudar com tudo sobre as cocadas. Escolha uma opção abaixo ou escreva sua dúvida:`
+  };
+  return msgs[intencao] || msgs.padrao;
+}
+
+function svBtnTipo(intencao) {
+  const mapa = {sabores:'sabores',preco:'preco',pedido:'pedido',entrega:'entrega',diabetes:'outros',artesa:'outros',pagamento:'pedido',obrigado:'outros',padrao:'inicio'};
+  return mapa[intencao]||'outros';
+}
+
+function svResponder(txt) {
+  // Etapa 1: capturar nome
+  if(svEtapa===1) {
+    const t = txt.trim();
+    const palavras = t.split(/\s+/);
+    const poss = palavras[0];
+    // É nome se: entre 2 e 15 chars, sem números, não é palavra-chave de produto
+    const naoeNome = /sabor|preco|quanto|entrega|pedir|ola|oi|sim|nao|quais/.test(svNorm(poss));
+    if(poss.length >= 2 && poss.length <= 15 && !/\d/.test(poss) && !naoeNome) {
+      svNome = poss.charAt(0).toUpperCase() + poss.slice(1).toLowerCase();
+      svEtapa = 2;
+      return { txt: `Que nome lindo, <strong>${svNome}</strong>! 🍬 Como posso te ajudar hoje?`, btns: 'inicio' };
+    }
+    // Se não parece nome, detecta intenção diretamente
+    svEtapa = 2;
+  }
+  const intencao = svDetectar(txt);
+  return { txt: svTexto(intencao), btns: svBtnTipo(intencao) };
+}
 
 function svToggle(){
   svOpen=!svOpen;
   document.getElementById('silvana-window').classList.toggle('open',svOpen);
   document.querySelector('#silvana-toggle .sv-badge').style.display='none';
-  if(svOpen&&!svStarted){svStarted=true;setTimeout(()=>svAdd('bot','Olá! 🍬 Sou a <strong>Dona Silvana</strong> da Cocada dos Sonhos! Que bom ter você aqui. Como posso te chamar?'),450);}
+  if(svOpen&&!svStarted){
+    svStarted=true; svEtapa=1;
+    setTimeout(()=>{
+      svAdd('bot','Olá! 🍬 Sou a <strong>Dona Silvana</strong> da Cocada dos Sonhos! Que bom ter você aqui. Como posso te chamar?');
+    },450);
+  }
 }
-function svQuick(t){document.getElementById('svsugs').style.display='none';document.getElementById('svinput').value=t;svEnviar();}
-async function svEnviar(){
+
+function svQuick(t){ document.getElementById('svsugs').style.display='none'; svDigitar(t); }
+
+function svEnviar(){
   const inp=document.getElementById('svinput');
-  const t=inp.value.trim();if(!t)return;inp.value='';
-  svAdd('usr',t);svHist.push({role:'user',content:t});
+  const t=inp.value.trim(); if(!t)return; inp.value='';
+  svAdd('usr',t);
   const typ=svTyping();
-  try{
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,system:SV_SYS,messages:svHist})});
-    const d=await r.json();typ.remove();
-    const rep=d?.content?.[0]?.text||'Me chama no WhatsApp! 😊';
-    svHist.push({role:'assistant',content:rep});svAdd('bot',rep);
-  }catch(e){typ.remove();svAdd('bot','Tive um probleminha. Me chama no <a href="https://wa.me/5522988083910" target="_blank" style="color:#3a7a3a;font-weight:800;">WhatsApp</a> 🍬');}
+  setTimeout(()=>{
+    typ.remove();
+    const r = svResponder(t);
+    svAdd('bot', r.txt);
+    setTimeout(()=>svMostrarBtns(r.btns), 300);
+  }, 700 + Math.random()*500);
 }
+
 function svAdd(tp,html){
   const b=document.getElementById('svmsgs');
-  const d=document.createElement('div');d.className='svm '+tp;d.innerHTML=html;
-  b.appendChild(d);b.scrollTop=b.scrollHeight;
+  const d=document.createElement('div'); d.className='svm '+tp; d.innerHTML=html;
+  b.appendChild(d); b.scrollTop=9999;
 }
 function svTyping(){
   const b=document.getElementById('svmsgs');
-  const d=document.createElement('div');d.className='svtyp';
+  const d=document.createElement('div'); d.className='svtyp';
   d.innerHTML='<span></span><span></span><span></span>';
-  b.appendChild(d);b.scrollTop=b.scrollHeight;return d;
+  b.appendChild(d); b.scrollTop=9999; return d;
 }
 
 // Cookie banner
